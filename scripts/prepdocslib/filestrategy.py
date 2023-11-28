@@ -14,6 +14,7 @@ class DocumentAction(Enum):
     Add = 0
     Remove = 1
     RemoveAll = 2
+    RemoveAllAndAdd = 3
 
 
 class FileStrategy(Strategy):
@@ -73,3 +74,21 @@ class FileStrategy(Strategy):
         elif self.document_action == DocumentAction.RemoveAll:
             await self.blob_manager.remove_blob()
             await search_manager.remove_content()
+        elif self.document_action == DocumentAction.RemoveAllAndAdd:
+            await self.blob_manager.remove_blob()
+            await search_manager.remove_content()
+            files = self.list_file_strategy.list()
+            async for file in files:
+                try:
+                    pages = [page async for page in self.pdf_parser.parse(content=file.content)]
+                    if search_info.verbose:
+                        print(f"Splitting '{file.filename()}' into sections")
+                    sections = [
+                        Section(split_page, content=file, category=self.category)
+                        for split_page in self.text_splitter.split_pages(pages)
+                    ]
+                    await search_manager.update_content(sections)
+                    await self.blob_manager.upload_blob(file)
+                finally:
+                    if file:
+                        file.close()

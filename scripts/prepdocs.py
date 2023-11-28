@@ -98,6 +98,8 @@ def setup_file_strategy(credential: AsyncTokenCredential, args: Any) -> FileStra
         document_action = DocumentAction.RemoveAll
     elif args.remove:
         document_action = DocumentAction.Remove
+    elif args.removeallandadd:
+        document_action = DocumentAction.RemoveAllAndAdd
     else:
         document_action = DocumentAction.Add
 
@@ -224,6 +226,11 @@ if __name__ == "__main__":
         "--removeall",
         action="store_true",
         help="Remove all blobs from blob storage and documents from the search index",
+    )
+    parser.add_argument(
+        "--removeallandadd",
+        action="store_true",
+        help="Remove all blobs from blob storage and documents from the search index,and add new files",
     )
     parser.add_argument(
         "--localpdfparser",
