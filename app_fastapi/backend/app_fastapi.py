@@ -25,7 +25,13 @@ from approaches.chatreadretrieveread import ChatReadRetrieveReadApproach
 from approaches.retrievethenread import RetrieveThenReadApproach
 from core.authentication import AuthenticationHelper
 
-
+from fastapi import FastAPI, Request, HTTPException, Query, UploadFile, File, Body
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
+from pydantic import BaseModel, Field
+import uvicorn
+import traceback
 
 def create_app():
     # Check for an environment variable that's only set in production
@@ -38,7 +44,6 @@ def create_app():
     else:
         app = fastapi.FastAPI()
 
-    @app.on_event("startup")
     async def setup_clients():
         AZURE_STORAGE_ACCOUNT = os.environ["AZURE_STORAGE_ACCOUNT"]
         AZURE_STORAGE_CONTAINER = os.environ["AZURE_STORAGE_CONTAINER"]
@@ -142,6 +147,7 @@ def create_app():
             AZURE_SEARCH_QUERY_SPELLER,
         )
 
+    app.add_event_handler("startup", setup_clients)
     @app.middleware("http")
     async def ensure_openai_token():
         if openai.api_type != "azure_ad":
@@ -156,3 +162,4 @@ def create_app():
 
     app.include_router(routes.router)
     return app
+

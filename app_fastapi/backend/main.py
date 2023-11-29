@@ -1,3 +1,4 @@
-from app import create_app
+from app_fastapi import create_app
+
 
 app = create_app()

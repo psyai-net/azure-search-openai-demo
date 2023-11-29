@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse
 import aiohttp
 import json
-from fastapi import Request
+from fastapi import Request,Response
 from azure.core.exceptions import ResourceNotFoundError
 
 
@@ -129,8 +129,11 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
 
 @router.post("/chat")
 async def chat(request: Request):
-    if not request.is_json:
-        return JSONResponse({"error": "request must be json"}), 415
+    try:
+        request_json = await request.json()
+    except json.JSONDecodeError:
+        return JSONResponse({"error": "request must be json"}, status_code=415)
+
     request_json = await request.json()
     context = request_json.get("context", {})
     auth_helper = request.app.state[CONFIG_AUTH_CLIENT]
@@ -146,9 +149,8 @@ async def chat(request: Request):
         if isinstance(result, dict):
             return JSONResponse(result)
         else:
-            response = await make_response(format_as_ndjson(result))
-            response.timeout = None  # type: ignore
-            response.mimetype = "application/json-lines"
+            response = Response(content=format_as_ndjson(result))
+            response.headers["Content-Type"] = "application/json-lines"
             return response
     except Exception as error:
         return error_response(error, "/chat")
