@@ -12,7 +12,7 @@ import aiohttp
 import json
 from fastapi import Request,Response
 from azure.core.exceptions import ResourceNotFoundError
-
+import os
 
 
 CONFIG_OPENAI_TOKEN = "openai_token"
@@ -35,7 +35,7 @@ router = fastapi.APIRouter()
 # @router.post("/ask")
 @router.get("/")
 async def index():
-    return await bp.send_static_file("index.html")
+    return FileResponse('static/index.html')
 
 
 # Empty page is recommended for login redirect to work.
@@ -47,12 +47,13 @@ async def redirect():
 
 @router.get("/favicon.ico")
 async def favicon():
-    return await bp.send_static_file("favicon.ico")
+    return FileResponse('static/favicon.ico')
 
 
-@router.get("/assets/<path:path>")
-async def assets(path):
-    return await send_from_directory(Path(__file__).resolve().parent / "static" / "assets", path)
+@router.get("/assets/{path:path}")
+async def assets(path: str):
+    return FileResponse(os.path.join('static/assets', path))
+    # return await send_from_directory(Path(__file__).resolve().parent / "static" / "assets", path)
 
 
 # Serve content files from blob storage from within the app to keep the example self-contained.
