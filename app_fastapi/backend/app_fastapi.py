@@ -28,10 +28,7 @@ from core.authentication import AuthenticationHelper
 from fastapi import FastAPI, Request, HTTPException, Query, UploadFile, File, Body
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator
-from pydantic import BaseModel, Field
-import uvicorn
-import traceback
+
 
 def create_app():
     # Check for an environment variable that's only set in production
