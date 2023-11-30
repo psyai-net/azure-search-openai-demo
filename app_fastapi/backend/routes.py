@@ -53,7 +53,6 @@ async def favicon():
 @router.get("/assets/{path:path}")
 async def assets(path: str):
     return FileResponse(os.path.join('static/assets', path))
-    # return await send_from_directory(Path(__file__).resolve().parent / "static" / "assets", path)
 
 
 # Serve content files from blob storage from within the app to keep the example self-contained.
@@ -61,6 +60,13 @@ async def assets(path: str):
 # can access all the files. This is also slow and memory hungry.
 @router.get("/content/{path}")
 async def content_file(request: Request, path: str):
+    # result = {
+    #     "path": path,
+    #     "mimetype": "application/octet-stream",
+    #     "as_attachment": False,
+    #     "attachment_filename": "mock_filename.txt"
+    # }
+    # return result
     # Remove page number from path, filename-1.txt -> filename.txt
     if path.find("#page=") > 0:
         path_parts = path.rsplit("#page=", 1)
@@ -98,6 +104,7 @@ def error_response(error: Exception, route: str, status_code: int = 500):
 
 @router.post("/ask")
 async def ask(request: Request):
+    # return JSONResponse("hi")
     try:
         request_json = await request.json()
     except json.JSONDecodeError:
@@ -131,6 +138,7 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
 
 @router.post("/chat")
 async def chat(request: Request):
+    # return JSONResponse({"error": "request must be json"}, status_code=415)
     try:
         request_json = await request.json()
     except json.JSONDecodeError:
@@ -162,8 +170,8 @@ async def chat(request: Request):
 # Send MSAL.js settings to the client UI
 @router.get("/auth_setup")
 def auth_setup(request: Request):
+    # return JSONResponse("hi")
     auth_helper = getattr(request.app.state, CONFIG_AUTH_CLIENT)
-
     return JSONResponse(auth_helper.get_auth_setup_for_client())
 
 
