@@ -59,7 +59,7 @@ async def assets(path: str):
 # Serve content files from blob storage from within the app to keep the example self-contained.
 # *** NOTE *** this assumes that the content files are public, or at least that all users of the app
 # can access all the files. This is also slow and memory hungry.
-@router.get("/content/<path>")
+@router.get("/content/{path}")
 async def content_file(request: Request, path: str):
     # Remove page number from path, filename-1.txt -> filename.txt
     if path.find("#page=") > 0:
