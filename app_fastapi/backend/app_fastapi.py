@@ -150,17 +150,6 @@ def create_app():
     async def ensure_openai_token():
         if openai.api_type != "azure_ad":
             return
-        openai_token = app.state[routes.CONFIG_OPENAI_TOKEN]
-        if openai_token.expires_on < time.time() + 60:
-            openai_token = await app.state[routes.CONFIG_CREDENTIAL].get_token(
-                "https://cognitiveservices.azure.com/.default"
-            )
-            app.state[routes.CONFIG_OPENAI_TOKEN] = openai_token
-            openai.api_key = openai_token.token
-
-    async def ensure_openai_token():
-        if openai.api_type != "azure_ad":
-            return
         openai_token = getattr(app.state, routes.CONFIG_OPENAI_TOKEN)
         if openai_token.expires_on < time.time() + 60:
             openai_token = await getattr(app.state, routes.CONFIG_CREDENTIAL).get_token(
