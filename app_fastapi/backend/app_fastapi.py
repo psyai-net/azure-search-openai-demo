@@ -105,20 +105,22 @@ def create_app():
             openai_token = await azure_credential.get_token("https://cognitiveservices.azure.com/.default")
             openai.api_key = openai_token.token
             # Store on app.config for later use inside requests
-            app.state[routes.CONFIG_OPENAI_TOKEN] = openai_token
+            setattr(app.state, routes.CONFIG_OPENAI_TOKEN, openai_token)
+
         else:
             openai.api_type = "openai"
             openai.api_key = OPENAI_API_KEY
             openai.organization = OPENAI_ORGANIZATION
 
-        app.state[routes.CONFIG_CREDENTIAL] = azure_credential
-        app.state[routes.CONFIG_SEARCH_CLIENT] = search_client
-        app.state[routes.CONFIG_BLOB_CONTAINER_CLIENT] = blob_container_client
-        app.state[routes.CONFIG_AUTH_CLIENT] = auth_helper
+        setattr(app.state, routes.CONFIG_CREDENTIAL, azure_credential)
+        setattr(app.state, routes.CONFIG_SEARCH_CLIENT, search_client)
+        setattr(app.state, routes.CONFIG_BLOB_CONTAINER_CLIENT, blob_container_client)
+        setattr(app.state, routes.CONFIG_AUTH_CLIENT, auth_helper)
 
         # Various approaches to integrate GPT and external knowledge, most applications will use a single one of these patterns
         # or some derivative, here we include several for exploration purposes
-        app.state[routes.CONFIG_ASK_APPROACH] = RetrieveThenReadApproach(
+
+        setattr(app.state, routes.CONFIG_ASK_APPROACH, RetrieveThenReadApproach(
             search_client,
             OPENAI_HOST,
             AZURE_OPENAI_CHATGPT_DEPLOYMENT,
@@ -129,9 +131,9 @@ def create_app():
             KB_FIELDS_CONTENT,
             AZURE_SEARCH_QUERY_LANGUAGE,
             AZURE_SEARCH_QUERY_SPELLER,
-        )
+        ))
 
-        app.state[routes.CONFIG_CHAT_APPROACH] = ChatReadRetrieveReadApproach(
+        setattr(app.state, routes.CONFIG_CHAT_APPROACH, ChatReadRetrieveReadApproach(
             search_client,
             OPENAI_HOST,
             AZURE_OPENAI_CHATGPT_DEPLOYMENT,
@@ -142,10 +144,9 @@ def create_app():
             KB_FIELDS_CONTENT,
             AZURE_SEARCH_QUERY_LANGUAGE,
             AZURE_SEARCH_QUERY_SPELLER,
-        )
-
+        ))
     app.add_event_handler("startup", setup_clients)
-    @app.middleware("http")
+
     async def ensure_openai_token():
         if openai.api_type != "azure_ad":
             return
@@ -157,6 +158,18 @@ def create_app():
             app.state[routes.CONFIG_OPENAI_TOKEN] = openai_token
             openai.api_key = openai_token.token
 
+    async def ensure_openai_token():
+        if openai.api_type != "azure_ad":
+            return
+        openai_token = getattr(app.state, routes.CONFIG_OPENAI_TOKEN)
+        if openai_token.expires_on < time.time() + 60:
+            openai_token = await getattr(app.state, routes.CONFIG_CREDENTIAL).get_token(
+                "https://cognitiveservices.azure.com/.default"
+            )
+            setattr(app.state, routes.CONFIG_OPENAI_TOKEN, openai_token)
+            openai.api_key = openai_token.token
+
+    app.middleware("http")(ensure_openai_token)
     app.include_router(routes.router)
     return app
 

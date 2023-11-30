@@ -66,7 +66,7 @@ async def content_file(request: Request, path: str):
         path_parts = path.rsplit("#page=", 1)
         path = path_parts[0]
     logging.info("Opening file %s at page %s", path)
-    blob_container_client = request.app.state[CONFIG_BLOB_CONTAINER_CLIENT]
+    blob_container_client = request.app.state.CONFIG_BLOB_CONTAINER_CLIENT
     try:
         blob = await blob_container_client.get_blob_client(path).download_blob()
     except ResourceNotFoundError:
@@ -104,10 +104,10 @@ async def ask(request: Request):
         raise HTTPException(status_code=415, detail="request must be json")
    
     context = request_json.get("context", {})
-    auth_helper = request.app.state[CONFIG_AUTH_CLIENT]
+    auth_helper = request.app.state.CONFIG_AUTH_CLIENT
     context["auth_claims"] = await auth_helper.get_auth_claims_if_enabled(request.headers)
     try:
-        approach = request.app.state[CONFIG_ASK_APPROACH]
+        approach = request.app.state.CONFIG_ASK_APPROACH
         # Workaround for: https://github.com/openai/openai-python/issues/371
         async with aiohttp.ClientSession() as s:
             openai.aiosession.set(s)
@@ -137,10 +137,10 @@ async def chat(request: Request):
 
     request_json = await request.json()
     context = request_json.get("context", {})
-    auth_helper = request.app.state[CONFIG_AUTH_CLIENT]
+    auth_helper = request.app.state.CONFIG_AUTH_CLIENT
     context["auth_claims"] = await auth_helper.get_auth_claims_if_enabled(request.headers)
     try:
-        approach = request.app.state[CONFIG_CHAT_APPROACH]
+        approach = request.app.state.CONFIG_CHAT_APPROACH
         result = await approach.run(
             request_json["messages"],
             stream=request_json.get("stream", False),
@@ -160,7 +160,7 @@ async def chat(request: Request):
 # Send MSAL.js settings to the client UI
 @router.get("/auth_setup")
 def auth_setup(request: Request):
-    auth_helper = request.request.app.state[CONFIG_AUTH_CLIENT]
+    auth_helper = request.app.state.CONFIG_AUTH_CLIENT
     return JSONResponse(auth_helper.get_auth_setup_for_client())
 
 
