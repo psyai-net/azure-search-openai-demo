@@ -147,9 +147,9 @@ def create_app():
         ))
     app.add_event_handler("startup", setup_clients)
 
-    async def ensure_openai_token():
+    async def ensure_openai_token(request: Request, call_next):
         if openai.api_type != "azure_ad":
-            return
+            return await call_next(request)
         openai_token = getattr(app.state, routes.CONFIG_OPENAI_TOKEN)
         if openai_token.expires_on < time.time() + 60:
             openai_token = await getattr(app.state, routes.CONFIG_CREDENTIAL).get_token(
@@ -157,6 +157,7 @@ def create_app():
             )
             setattr(app.state, routes.CONFIG_OPENAI_TOKEN, openai_token)
             openai.api_key = openai_token.token
+            return await call_next(request)
 
     app.middleware("http")(ensure_openai_token)
     app.include_router(routes.router)
