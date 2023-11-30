@@ -1,6 +1,6 @@
 import os
 import fastapi
-from . import routes
+import routes
 
 import io
 import json
@@ -28,7 +28,7 @@ from core.authentication import AuthenticationHelper
 from fastapi import FastAPI, Request, HTTPException, Query, UploadFile, File, Body
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.staticfiles import StaticFiles
 
 def create_app():
     # Check for an environment variable that's only set in production
@@ -160,5 +160,7 @@ def create_app():
 
     app.middleware("http")(ensure_openai_token)
     app.include_router(routes.router)
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
     return app
 
