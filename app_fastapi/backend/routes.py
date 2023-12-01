@@ -185,19 +185,6 @@ def delete_file(file_ids: list[str] = Query(...)):
 def list_file(file_ids: list[str] = Query(...)):
     return {"code": 0, "message": "查询成功", "files":["file1", "file2"]}
 
-##########################################    Assistant    ##########################################
-
-@router.post("/Assistant/create", tags=["Assistant"], summary="创建Assistant")
-def create_Assistant(file_ids: list[str] = Query(...), url: str = Query(...), text: str = Query(...), prompt_template_id: str = Query(..., description="提示词模板id")):
-    return {"code": 0, "message": "创建成功", "assistant_id": "assistant_id"}
-
-@router.post("/Assistant/delete", tags=["Assistant"], summary="删除Assistant")
-def delete_Assistant(assistant_id: str = Query(...)):
-    return {"code": 0, "message": "删除成功"}
-
-@router.post("/Assistant/update", tags=["Assistant"], summary="更新Assistant")
-def update_Assistant(assistant_id: str = Query(...), file_ids: list[str] = Query(...), url: str = Query(...),  text: str = Query(...)):
-    return {"code": 0, "message": "更新成功"}
 
 
 ##########################################    Agent    ##########################################
