@@ -6,14 +6,14 @@ import mimetypes
 from pathlib import Path
 from typing import AsyncGenerator
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse
 import aiohttp
 import json
-from fastapi import Request,Response
 from azure.core.exceptions import ResourceNotFoundError
-import os
 from starlette.responses import StreamingResponse
+from fastapi import Request, HTTPException, Query, UploadFile, File, Body
+from pydantic import BaseModel, Field
+
 
 CONFIG_OPENAI_TOKEN = "openai_token"
 CONFIG_CREDENTIAL = "azure_credential"
@@ -171,6 +171,87 @@ def auth_setup(request: Request):
     # return JSONResponse("hi")
     auth_helper = getattr(request.app.state, CONFIG_AUTH_CLIENT)
     return JSONResponse(auth_helper.get_auth_setup_for_client())
+
+
+@router.post("/file/upload", tags=["Storage"], summary="文件上传")
+def upload_file(file: UploadFile = File(...)):
+    return {"code": 0, "message": "上传成功", "file_id": "file_id"}
+
+@router.post("/file/delete", tags=["Storage"], summary="文件删除")
+def delete_file(file_ids: list[str] = Query(...)):
+    return {"code": 0, "message": "删除成功"}
+
+@router.post("/file/list", tags=["Storage"], summary="文件查询")
+def list_file(file_ids: list[str] = Query(...)):
+    return {"code": 0, "message": "查询成功", "files":["file1", "file2"]}
+
+##########################################    Assistant    ##########################################
+
+@router.post("/Assistant/create", tags=["Assistant"], summary="创建Assistant")
+def create_Assistant(file_ids: list[str] = Query(...), url: str = Query(...), text: str = Query(...), prompt_template_id: str = Query(..., description="提示词模板id")):
+    return {"code": 0, "message": "创建成功", "assistant_id": "assistant_id"}
+
+@router.post("/Assistant/delete", tags=["Assistant"], summary="删除Assistant")
+def delete_Assistant(assistant_id: str = Query(...)):
+    return {"code": 0, "message": "删除成功"}
+
+@router.post("/Assistant/update", tags=["Assistant"], summary="更新Assistant")
+def update_Assistant(assistant_id: str = Query(...), file_ids: list[str] = Query(...), url: str = Query(...),  text: str = Query(...)):
+    return {"code": 0, "message": "更新成功"}
+
+
+##########################################    Agent    ##########################################
+
+class GenerateContextResultModel(BaseModel):
+    topic_description: str = Field(..., title="topic_description", description="主题描述")
+    audience_description: str = Field(..., title="audience_description", description="观众描述")
+    is_horizental: bool = Field(..., title="is_horizental", description="横竖屏")
+    language: str = Field(..., title="language", description="语言")
+    style: str = Field(..., title="style", description="风格")
+    duration: float = Field(..., title="duration", description="时长")
+    quantity: int = Field(..., title="quantity", description="数量")
+    title_array: list[str] = Field(..., title="title_array", description="标题数组")
+
+
+@router.post("/agent/generate_context", tags=["Agent"], summary="生成上下文参数")
+def generate_context(assistant_id: str = Query(...), template_id: str = Query(..., description="参数内容对应的模板")):
+    contextData = GenerateContextResultModel(
+        topic_description="custom_topic_description",
+        audience_description="custom_audience_description",
+        is_horizental=False,
+        language="custom_language",
+        style="custom_style",
+        duration=1.5,
+        quantity=3,
+        title_array=["custom_title1","custom_title2","custom_title3"]
+    )
+    return {"code": 0, "message": "生成成功", "context": contextData}
+
+@router.post("/agent/generate_explain", tags=["Agent"], summary="生成讲解文案/互动问答")
+def generate_explain(assistant_id: str = Query(...), context: GenerateContextResultModel=Body(...)):
+    return {"code": 0, "message": "生成成功", "data": ["讲解或问答回复"]}
+
+
+
+##########################################    ThirdPartyService    ##########################################
+
+@router.post("/text_to_speech", tags=["ThirdPartyService"], summary="文字转语音")
+def text_to_speech(text: str = Query(..., example = "你好"), voice_id: str = Query(..., example = "id"), only_url: bool = Query(..., example= True, description="是否仅需要url")):
+    result = []
+    for i in range(10):
+        result.append(i)
+    return {"code": 0, "message": "生成成功","audio":result, "audio_url":"audioUrl"}
+
+
+@router.post("/text_to_image", tags=["ThirdPartyService"], summary="文字转图片")
+def text_to_image(text: str = Query(..., example = "下雪的山水画"), only_url: bool = Query(..., example= True, description="是否仅需要url")):
+    return {"code": 0, "message": "生成成功","image":[0,0,0,0,0,0], "image_url":"image_url"}
+
+
+
+@router.post("/analyze_image", tags=["ThirdPartyService"], summary="识图")
+def analyze_image(file: UploadFile = File(...), prompt: str=Query(..., example= "识别图中的弹幕", description="识图的要求")):
+    return {"code": 0, "message": "生成成功","result":{}}
 
 
 

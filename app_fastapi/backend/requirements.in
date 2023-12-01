@@ -1,6 +1,4 @@
 azure-identity
-quart
-quart-cors
 openai[datalib]==0.28.1
 tiktoken
 azure-search-documents==11.4.0b6
@@ -14,3 +12,5 @@ opentelemetry-instrumentation-aiohttp-client
 msal
 msal-extensions
 fastapi
+pydantic
+python-multipart
