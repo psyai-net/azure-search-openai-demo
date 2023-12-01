@@ -5,7 +5,7 @@ metadata:
   template: azure-search-openai-demo@0.0.2-beta
 services:
   backend:
-    project: ./app/backend
+    project: ./app_fastapi/backend
     language: py
     host: appservice
     hooks:
