@@ -13,7 +13,7 @@ import json
 from fastapi import Request,Response
 from azure.core.exceptions import ResourceNotFoundError
 import os
-
+from starlette.responses import StreamingResponse
 
 CONFIG_OPENAI_TOKEN = "openai_token"
 CONFIG_CREDENTIAL = "azure_credential"
@@ -131,13 +131,11 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
 
 @router.post("/chat")
 async def chat(request: Request):
-    # return JSONResponse({"error": "request must be json"}, status_code=415)
     try:
         request_json = await request.json()
     except json.JSONDecodeError:
         return JSONResponse({"error": "request must be json"}, status_code=415)
 
-    request_json = await request.json()
     context = request_json.get("context", {})
     auth_helper = getattr(request.app.state, CONFIG_AUTH_CLIENT)
 
@@ -152,10 +150,17 @@ async def chat(request: Request):
         )
         if isinstance(result, dict):
             return JSONResponse(result)
+        # if isinstance(result, AsyncGenerator):
         else:
-            response = Response(content=format_as_ndjson(result))
-            response.headers["Content-Type"] = "application/json-lines"
-            return response
+            async def generate():
+                async for item in result:
+                    yield json.dumps(item).encode('utf-8') + b'\n' # Add newline after each JSON item
+            # Return as streaming response
+            return StreamingResponse(generate(), media_type="application/x-ndjson")
+        # else:
+        #     response = Response(content=format_as_ndjson(result))
+        #     response.headers["Content-Type"] = "application/json-lines"
+        #     return response
     except Exception as error:
         return error_response(error, "/chat")
 
