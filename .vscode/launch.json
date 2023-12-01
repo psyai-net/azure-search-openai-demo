@@ -5,6 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: FastAPI (Uvicorn)",
+            "type": "python",
+            "request": "launch",
+            "module": "uvicorn",
+            "cwd": "${workspaceFolder}/app_fastapi/backend",
+            "args": [
+                "main:app",
+                "--port", "50505",
+                "--reload"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "envFile": "${input:dotEnvFilePath}",    
+        },
+        {
+            "name": "Frontend: FastAPI watch",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm run dev",
+            "cwd": "${workspaceFolder}/app_fastapi/frontend",
+        },
+        {
             "name": "Python: Quart",
             "type": "python",
             "request": "launch",
