@@ -160,6 +160,13 @@ def create_app():
         return await call_next(request)
 
     app.middleware("http")(ensure_openai_token)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # 允许所有来源，注意在生产环境中你应该更加严格
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.include_router(routes.router)
     app.mount("/static", StaticFiles(directory="static"), name="static")
     # app.mount("/favicon.ico", StaticFiles(directory="static"), name="favicon")
