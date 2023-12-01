@@ -47,12 +47,13 @@ async def redirect():
 
 @router.get("/favicon.ico")
 async def favicon():
-    return FileResponse('static/favicon.ico')
+    return FileResponse(str(Path(__file__).parent / "static" / "favicon.ico"))
 
 
 @router.get("/assets/{path:path}")
 async def assets(path: str):
-    return FileResponse(os.path.join('static/assets', path))
+    return FileResponse(str(Path(__file__).parent / "static" / "assets" / path))
+
 
 
 # Serve content files from blob storage from within the app to keep the example self-contained.
@@ -60,14 +61,6 @@ async def assets(path: str):
 # can access all the files. This is also slow and memory hungry.
 @router.get("/content/{path}")
 async def content_file(request: Request, path: str):
-    # result = {
-    #     "path": path,
-    #     "mimetype": "application/octet-stream",
-    #     "as_attachment": False,
-    #     "attachment_filename": "mock_filename.txt"
-    # }
-    # return result
-    # Remove page number from path, filename-1.txt -> filename.txt
     if path.find("#page=") > 0:
         path_parts = path.rsplit("#page=", 1)
         path = path_parts[0]

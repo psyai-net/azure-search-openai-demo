@@ -59,7 +59,9 @@ cd ../backend
 
 port=50505
 host=localhost
-./backend_env/bin/python -m quart --app main:app run --port "$port" --host "$host" --reload
+# ./backend_env/bin/python -m quart --app main:app run --port "$port" --host "$host" --reload
+./backend_env/bin/python -m uvicorn main:app --port "$port" --host "$host" --reload
+
 if [ $? -ne 0 ]; then
     echo "Failed to start backend"
     exit $?

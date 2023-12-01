@@ -157,11 +157,12 @@ def create_app():
             )
             setattr(app.state, routes.CONFIG_OPENAI_TOKEN, openai_token)
             openai.api_key = openai_token.token
-            return await call_next(request)
+        return await call_next(request)
 
     app.middleware("http")(ensure_openai_token)
     app.include_router(routes.router)
     app.mount("/static", StaticFiles(directory="static"), name="static")
-
+    # app.mount("/favicon.ico", StaticFiles(directory="static"), name="favicon")
+    # app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
     return app
 
