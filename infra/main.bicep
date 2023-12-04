@@ -82,6 +82,15 @@ param principalId string = ''
 @description('Use Application Insights for monitoring and performance tracing')
 param useApplicationInsights bool = false
 
+@description('The email address of the owner of the service')
+@minLength(1)
+param publisherEmail string
+
+@description('The name of the owner of the service')
+@minLength(1)
+param publisherName string
+
+
 var abbrs = loadJsonContent('abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
@@ -92,6 +101,8 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
   tags: tags
 }
+
+var prefix = '${resourceGroup.name}-${resourceToken}'
 
 resource openAiResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(openAiResourceGroupName)) {
   name: !empty(openAiResourceGroupName) ? openAiResourceGroupName : resourceGroup.name
@@ -394,6 +405,33 @@ module searchRoleBackend 'core/security/role.bicep' = {
   }
 }
 
+// Creates Azure API Management (APIM) service to mediate the requests between the frontend and the backend API
+module apim './core/gateway/apim.bicep' = {
+  name: 'apim-deployment'
+  scope: resourceGroup
+  params: {
+    name: '${prefix}-apim'
+    location: location
+    tags: tags
+    applicationInsightsName: monitoring.outputs.applicationInsightsName
+    publisherEmail: publisherEmail
+    publisherName: publisherName
+  }
+}
+
+// Configures the API in the Azure API Management (APIM) service
+module apimAPI 'apimanagement.bicep' = {
+  name: 'apimanagement-resources'
+  scope: resourceGroup
+  params: {
+    apimServiceName: apim.outputs.apimServiceName
+    appServiceName: backend.outputs.name
+  }
+  dependsOn: [
+    backend
+  ]
+}
+
 output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_RESOURCE_GROUP string = resourceGroup.name
@@ -423,3 +461,5 @@ output AZURE_STORAGE_CONTAINER string = storageContainerName
 output AZURE_STORAGE_RESOURCE_GROUP string = storageResourceGroup.name
 
 output BACKEND_URI string = backend.outputs.uri
+
+output SERVICE_API_ENDPOINTS array = ['${apimAPI.outputs.apimServiceUrl}/public/docs']
